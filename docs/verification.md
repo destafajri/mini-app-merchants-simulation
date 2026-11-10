@@ -21,3 +21,7 @@ Python verification used a local 3.14 environment. `requirements.lock.txt` recor
 [Mobile merchant screenshot](merchant-mobile.png) uses synthetic test identity only. It is not a production screenshot.
 
 Telemetry workflow-start and stage-start delivery attempts timed out at the configured publisher. No publisher acceptance or dashboard ingestion was verified; lifecycle tracking is incomplete. No automated retries were performed.
+
+## Local first-run follow-up
+
+The first real setup invocation exposed a `Path.open(opener=...)` incompatibility. The helper now uses built-in `open` with an exclusive, owner-only opener. A subprocess regression test verifies successful env generation, password hash usability, permissions, no plaintext password in env/output, and overwrite refusal. `python -m pytest -q`: PASS, 5 tests. SDK checks remain PASS. Generated local configuration and login details are excluded from version control.
