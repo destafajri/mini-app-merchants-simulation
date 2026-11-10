@@ -48,3 +48,15 @@ Supersedes fixture-password behavior above: `fixtures/demo_users.json` contains 
 - Local Chrome at mobile width — PASS for `demo` and `demo10`: env-password login, token bridge and logout. Password absent from public config; fixture HTTP route remains 404.
 - Compile, example dotenv parsing (six active keys), Markdown links and diff whitespace checks — PASS.
 - Real Go integration and Vercel deployment remain NOT_EVALUATED. Telemetry workflow-start timed out; no publisher acceptance or complete lifecycle tracking verified.
+
+## Dark finance UI refresh
+
+The merchant login, dashboard and receiver now use a charcoal/mint theme with original Murid Wukong branding, service icons and responsive layouts. See [UI preview](ui-preview.md) for final screenshots and browser coverage. No backend auth, user configuration, downstream ownership or bridge wire contract changes.
+
+- `python -m pytest -q` — PASS, 7 tests; existing Starlette TestClient deprecation warning remains.
+- `node tests/test_bridge.mjs` — PASS.
+- Chrome 390 × 844 and 1440 × 1000 — PASS: incorrect login, password visibility toggle, correct login, account ID, receiver token, receiver retry, container back, focus restoration and logout.
+- Chrome 320 px — login and dashboard have no horizontal overflow. Mobile navigation and reduced-motion path PASS. Forged origin/source messages trigger no token request.
+- Documentation links and `git diff --check` — PASS.
+- Screenshots use synthetic profile data only. External FE, downstream integration and deployed Vercel revision were not evaluated during this UI task.
+- Telemetry workflow-start timed out at the existing publisher; lifecycle tracking is incomplete. No automatic retries.

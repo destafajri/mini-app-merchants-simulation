@@ -12,3 +12,5 @@ Audience: frontend engineers building the VIA Mini App and backend engineers con
 This documentation specifies the implemented simulator interface. It does not establish downstream contract approval or claim a successful deployed integration. Example domains and identities are placeholders. Do not use real customer data in this simulator.
 
 [Local verification record](verification.md) and [mobile screenshot](merchant-mobile.png) describe the actual checked scope and outstanding integration checks.
+
+[UI preview gallery and browser verification](ui-preview.md) covers the dark theme, mobile/desktop screenshots and interaction checks.
