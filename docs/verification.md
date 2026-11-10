@@ -72,3 +72,14 @@ Added light/dark and ID/EN selectors with browser preference persistence and sha
 - Chrome 320 px light/EN — login/home overflow PASS. Live error translation, cross-tab and active receiver sync, and controls with blocked localStorage PASS.
 - Public screenshots contain synthetic profile data only. External FE theme propagation is not implemented; external integration and deployed Vercel revision were not evaluated.
 - Telemetry workflow-start timed out at the configured publisher; lifecycle tracking remains incomplete, without automatic retries.
+
+
+## Header preference toggles
+
+Replaced the appearance/language dropdowns with labeled two-position switches and a sliding active indicator. Existing saved preferences remain compatible. Screenshot galleries now show the toggle controls.
+
+- `python -m pytest -q` — PASS, 7 tests; existing Starlette TestClient deprecation warning remains.
+- `node tests/test_bridge.mjs` and `node tests/test_preferences.mjs` — PASS. Updated preference tests exercise real click listeners, repeated toggles, checked states, persistence, storage sync and blocked storage.
+- Local Chrome at 320, 390 and 1440 px — PASS for all four theme/language combinations: click, Enter/Space keyboard activation, reload persistence, login, switches after login, embedded receiver, logout and horizontal overflow. Switch hit areas are at least 44 px high. No uncaught page errors.
+- Chrome with blocked localStorage — toggle clicks PASS. Screenshots contain synthetic account data only.
+- External FE and deployed Vercel revision were not evaluated. Telemetry workflow-start timed out at the existing publisher; lifecycle tracking remains incomplete without retry.

@@ -30,7 +30,7 @@ Verified with Chrome at 390 × 844 and 1440 × 1000: incorrect login, password t
 
 ## Appearance and language controls
 
-Header selectors support **Light / Dark** and **ID / EN** before and after login. With no saved choice, theme follows the browser system appearance and language defaults to Indonesian. Explicit choices persist in origin-local `localStorage` under `mw.theme` and `mw.language`. No cookies, passwords or tokens are placed there. If storage is blocked, controls still work for the current page.
+Each header toggle switches immediately between its two labeled positions, with a sliding highlight showing the current choice. Native buttons support mouse, touch, Enter and Space. Screen readers receive a stable switch label and checked state (dark mode / English enabled). Header toggles support **Light / Dark** and **ID / EN** before and after login. With no saved choice, theme follows the browser system appearance and language defaults to Indonesian. Explicit choices persist in origin-local `localStorage` under `mw.theme` and `mw.language`. No cookies, passwords or tokens are placed there. If storage is blocked, controls still work for the current page.
 
 Translated content includes static copy, placeholders, accessible labels, login loading/errors, configuration notices, bridge status and demo receiver copy. User profile names/IDs and protocol values such as `BRIDGE_OK` remain unchanged. Switching language preserves form values and the active session. Open same-origin demo receivers and other tabs synchronize via browser storage events. External Mini App frontends do not receive a new parameter or bridge message; theme/language integration there remains the receiving team's responsibility.
 

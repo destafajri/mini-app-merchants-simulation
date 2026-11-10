@@ -3,6 +3,7 @@
   const messages = {
     pageTitle:['Murid Wukong — Simulator Merchant','Murid Wukong — Merchant Simulator'],
     skip:['Lewati ke konten','Skip to content'], theme:['Tampilan','Appearance'], language:['Bahasa','Language'], dark:['Gelap','Dark'], light:['Terang','Light'],
+    darkMode:['Mode gelap','Dark mode'], englishLanguage:['Bahasa Inggris','English language'],
     tagline:['Satu akun. Banyak kemungkinan.','One account. More possibilities.'], headline:['Semua kebutuhan.','Your everyday needs.'], headlineAccent:['Satu langkah dekat.','One step closer.'],
     introduction:['Jelajahi layanan favoritmu bersama Murid Wukong. Mulai dari sini, lanjut ke VIA.','Explore your favorite services with Murid Wukong. Start here, continue with VIA.'],
     memberAccess:['Akses member.','Member access.'], memberCaption:['Satu akun untuk membuka layanan VIA.','One account to access VIA services.'], storyCaption:['Pengalaman merchant, dalam versi simulasi.','The merchant experience, in a simulation.'],
@@ -37,7 +38,9 @@
     for (const attribute of ['placeholder','aria-label']) {
       document.querySelectorAll(`[data-i18n-${attribute}]`).forEach(el=>el.setAttribute(attribute,t(el.getAttribute(`data-i18n-${attribute}`))));
     }
-    document.querySelectorAll('[data-preference]').forEach(el=>{el.value=state[el.dataset.preference];});
+    document.querySelectorAll('[data-preference]').forEach(el=>{
+      el.setAttribute('aria-checked',String(state[el.dataset.preference]===el.dataset.onValue));
+    });
     if (document.body?.dataset.page==='receiver') document.title=t('receiverTitle');
     else document.title=t('pageTitle');
     window.dispatchEvent(new Event('mw:preferences'));
@@ -53,7 +56,8 @@
   document.documentElement.dataset.theme=state.theme;
   document.documentElement.lang=state.language;
   document.addEventListener('DOMContentLoaded',()=>{
-    document.querySelectorAll('[data-preference]').forEach(el=>el.addEventListener('change',()=>set(el.dataset.preference,el.value)));
+    document.querySelectorAll('[data-preference]').forEach(el=>el.addEventListener('click',()=>set(el.dataset.preference,
+      state[el.dataset.preference]===el.dataset.onValue?el.dataset.offValue:el.dataset.onValue)));
     apply();
   });
   window.addEventListener('storage',event=>{

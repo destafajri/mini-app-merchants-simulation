@@ -42,4 +42,4 @@ No database, background workers, downstream admin credentials, or production pay
 
 UI preview: [mobile screenshot](docs/merchant-mobile.png) and [login/home/container gallery](docs/ui-preview.md). Actual checks and pending external integration: [verification record](docs/verification.md).
 
-Appearance and language: use the header selectors for **Light / Dark** and **ID / EN**. Preferences persist in this browser. The initial theme follows the system appearance; language defaults to Indonesian. The built-in receiver follows these preferences; an external VIA frontend manages its own theme/language.
+Appearance and language: use the header toggles for **Light / Dark** and **ID / EN**. Preferences persist in this browser. The initial theme follows the system appearance; language defaults to Indonesian. The built-in receiver follows these preferences; an external VIA frontend manages its own theme/language.
