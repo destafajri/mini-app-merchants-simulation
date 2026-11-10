@@ -26,7 +26,7 @@ Telemetry workflow-start and stage-start delivery attempts timed out at the conf
 
 The first real setup invocation exposed a `Path.open(opener=...)` incompatibility. The helper now uses built-in `open` with an exclusive, owner-only opener. A subprocess regression test verifies successful env generation, password hash usability, permissions, no plaintext password in env/output, and overwrite refusal. `python -m pytest -q`: PASS, 5 tests. SDK checks remain PASS. Generated local configuration and login details are excluded from version control.
 
-## Repository demo accounts and reduced environment
+## Repository demo accounts and reduced environment (historical password behavior)
 
 Current account configuration supersedes the historical setup behavior above. Ten synthetic accounts now come from `fixtures/demo_users.json` with the public password documented in README. `DEMO_USERS_JSON` is ignored. Normal runtime requires only merchant URL, RSA private key and session secret; auth identity defaults remain overridable.
 
@@ -37,3 +37,14 @@ Current account configuration supersedes the historical setup behavior above. Te
 - Compile check, annotated example dotenv parsing (five active keys), Markdown relative links, and whitespace diff check — PASS.
 - Local RSA key and session secret preserved during config simplification. No Go service changes or real downstream integration checks performed.
 - Telemetry workflow-start delivery timed out; no publisher acceptance or complete lifecycle tracking established. No automated retry.
+
+
+## Shared password in environment
+
+Supersedes fixture-password behavior above: `fixtures/demo_users.json` contains only ten stable IDs, names and usernames. `DEMO_USER_PASSWORD` is required for login and has no runtime fallback. The setup helper writes an initial example value without printing it; local/Vercel operators choose the actual shared password. Signing key and session secret remain unchanged.
+
+- `python -m pytest -q` — PASS, 7 tests, including password override for all ten accounts, previous password rejection, unknown user rejection, Unicode password support, and missing/empty env failing closed. One existing Starlette TestClient deprecation warning remains.
+- `node tests/test_bridge.mjs` — PASS.
+- Local Chrome at mobile width — PASS for `demo` and `demo10`: env-password login, token bridge and logout. Password absent from public config; fixture HTTP route remains 404.
+- Compile, example dotenv parsing (six active keys), Markdown links and diff whitespace checks — PASS.
+- Real Go integration and Vercel deployment remain NOT_EVALUATED. Telemetry workflow-start timed out; no publisher acceptance or complete lifecycle tracking verified.

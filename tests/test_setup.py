@@ -16,6 +16,8 @@ def test_setup_creates_private_usable_env_and_preserves_existing(tmp_path):
     original = path.read_bytes()
     assert os.stat(path).st_mode & 0o777 == 0o600
     values = dotenv_values(path)
+    assert values['DEMO_USER_PASSWORD']=='MuridWukongDemo123!'
+    assert values['DEMO_USER_PASSWORD'] not in result.stdout+result.stderr
     assert 'DEMO_USERS_JSON' not in values
     assert 'JWT_ISSUER' not in values
     assert values['MERCHANT_PUBLIC_URL']=='http://localhost:8000'

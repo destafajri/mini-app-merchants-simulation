@@ -11,7 +11,7 @@ from app import app
 def client(monkeypatch):
     key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
     pem=key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()).decode()
-    values={'MERCHANT_PUBLIC_URL':'https://merchant.test','MERCHANT_CODE':'test','JWT_ISSUER':'https://merchant.test','JWT_AUDIENCE':'bevia-miniapp','JWT_KEY_ID':'test-key','JWT_PRIVATE_KEY_PEM':pem,'SESSION_SECRET':'test-session-secret','MINIAPP_FRONTEND_URL':''}
+    values={'MERCHANT_PUBLIC_URL':'https://merchant.test','MERCHANT_CODE':'test','JWT_ISSUER':'https://merchant.test','JWT_AUDIENCE':'bevia-miniapp','JWT_KEY_ID':'test-key','JWT_PRIVATE_KEY_PEM':pem,'SESSION_SECRET':'test-session-secret','DEMO_USER_PASSWORD':'MuridWukongDemo123!','MINIAPP_FRONTEND_URL':''}
     for k,v in values.items(): monkeypatch.setenv(k,v)
     with TestClient(app,base_url='https://merchant.test') as c: yield c
 
@@ -89,3 +89,20 @@ def test_all_repository_accounts_and_defaults(client,monkeypatch):
     assert claims['merchant_code']=='murid_wukong_demo'
     assert claims['sub']=='demo-user-010'
     assert jwt.get_unverified_header(result.json()['access_token'])['kid']=='murid-wukong-demo-v1'
+
+
+def test_shared_password_is_environment_only(client,monkeypatch):
+    from app import users
+    assert all(set(user)=={'id','name','username'} for user in users())
+    monkeypatch.setenv('DEMO_USER_PASSWORD','New-Test-Password-測試!')
+    assert sign_in(client).status_code==401
+    for user in users():
+        response=client.post('/api/auth/login',headers={'Origin':'https://merchant.test'},json={'username':user['username'],'password':'New-Test-Password-測試!'})
+        assert response.status_code==200
+        assert response.json()['id']==user['id']
+        assert 'password' not in response.text.lower()
+    assert client.post('/api/auth/login',headers={'Origin':'https://merchant.test'},json={'username':'unknown','password':'New-Test-Password-測試!'}).status_code==401
+    monkeypatch.delenv('DEMO_USER_PASSWORD')
+    assert sign_in(client).status_code==503
+    monkeypatch.setenv('DEMO_USER_PASSWORD','')
+    assert sign_in(client).status_code==503

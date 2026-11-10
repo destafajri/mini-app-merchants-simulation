@@ -13,10 +13,10 @@ Protected routes use the HttpOnly `merchant_session` cookie. Missing, invalid, e
 Request:
 
 ```json
-{"username":"demo","password":"MuridWukongDemo123!"}
+{"username":"demo","password":"<value of DEMO_USER_PASSWORD>"}
 ```
 
-Success 200 sets the session cookie (eight-hour lifetime) and returns `{"id":"demo-user-001","name":"Demo User"}`. Username/password length limits are 128/256 characters; minimum length one. Accounts are loaded from `fixtures/demo_users.json` (`demo`, `demo2` through `demo10`, all with the example password above). Wrong credentials: 401 `INVALID_CREDENTIALS`. Do not automate repeated attempts; configure perimeter rate limiting before public use.
+Success 200 sets the session cookie (eight-hour lifetime) and returns `{"id":"demo-user-001","name":"Demo User"}`. Username/password length limits are 128/256 characters; minimum length one. Accounts are loaded from `fixtures/demo_users.json` (`demo`, `demo2` through `demo10`, all with the shared password from `DEMO_USER_PASSWORD`). The fixture contains profiles only. Missing/empty `DEMO_USER_PASSWORD` returns 503 `CONFIGURATION_REQUIRED`. Wrong credentials: 401 `INVALID_CREDENTIALS`. Do not automate repeated attempts; configure perimeter rate limiting before public use.
 
 ## GET /api/auth/me
 

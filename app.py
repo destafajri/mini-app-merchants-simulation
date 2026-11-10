@@ -1,5 +1,4 @@
 """Stateless demo merchant identity provider and browser container."""
-import hashlib
 import hmac
 import json
 import os
@@ -75,18 +74,6 @@ def csrf(request):
         raise HTTPException(403, detail={"code": "ORIGIN_REJECTED"})
 
 
-def password_matches(password, encoded):
-    """Compare scrypt password hashes without keeping plaintext credentials."""
-    try:
-        algorithm, salt, expected = encoded.split("$")
-        if algorithm != "scrypt":
-            return False
-        actual = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
-        return hmac.compare_digest(actual, expected)
-    except (ValueError, TypeError):
-        return False
-
-
 def private_key():
     """Load the configured RSA signing key; reject undersized or wrong key types."""
     key = serialization.load_pem_private_key(setting("JWT_PRIVATE_KEY_PEM").replace("\\n", "\n").encode(), password=None)
@@ -120,8 +107,9 @@ def health():
 @app.post("/api/auth/login")
 def login(body: Login, request: Request, response: Response):
     csrf(request)
+    expected_password = setting("DEMO_USER_PASSWORD")
     for user in users():
-        if hmac.compare_digest(user["username"].encode(), body.username.encode()) and password_matches(body.password, user["password_hash"]):
+        if hmac.compare_digest(user["username"].encode(), body.username.encode()) and hmac.compare_digest(body.password.encode(), expected_password.encode()):
             response.set_cookie(COOKIE, signer().dumps(user["id"]), httponly=True, secure=origin(setting("MERCHANT_PUBLIC_URL")).startswith("https:"), samesite="lax", max_age=28800)
             return {"id": user["id"], "name": user["name"]}
     raise HTTPException(401, detail={"code": "INVALID_CREDENTIALS"})

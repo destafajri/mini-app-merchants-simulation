@@ -2,7 +2,7 @@
 
 | Symptom | Checks |
 | --- | --- |
-| Login fails | Use demo or demo2 through demo10 with MuridWukongDemo123!. Accounts come from fixtures/demo_users.json; old generated passwords and DEMO_USERS_JSON no longer apply. Check session secret and merchant origin. |
+| Login fails | Use demo or demo2 through demo10 with the value of DEMO_USER_PASSWORD in this deployment. Profiles come from fixtures/demo_users.json. Missing/empty password configuration returns 503. Restart/redeploy after changes; check session secret and merchant origin. |
 | 403 ORIGIN_REJECTED | Browser address origin must match MERCHANT_PUBLIC_URL exactly. localhost and 127.0.0.1 differ; preview domain and stable domain differ. |
 | VIA disabled | MINIAPP_FRONTEND_URL is blank. Use receiver demo until FE is available. |
 | Blank/refused iframe | Inspect FE CSP frame-ancestors and X-Frame-Options. Confirm HTTPS, route and external deployment protection. |
