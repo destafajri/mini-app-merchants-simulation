@@ -56,4 +56,4 @@ Public liveness: 200 `{"status":"ok","service":"merchant-simulator"}`. Does not 
 
 ## Browser assets
 
-`GET /` serves the merchant UI. `GET /receiver` serves the same-origin test receiver. `GET /merchant-bridge.js` serves the ES module SDK. Merchant page disallows framing; receiver permits same-origin framing only. No token is exposed by these asset responses.
+`GET /` serves the merchant UI. `GET /receiver` serves the same-origin test receiver. `GET /merchant-bridge.js` serves the ES module SDK. `GET /ui-preferences.js` serves the simulator-only theme/language helper; it contains no credentials and does not modify the bridge protocol. Merchant page disallows framing; receiver permits same-origin framing only. No token is exposed by these asset responses.

@@ -41,3 +41,5 @@ Set `MINIAPP_FRONTEND_URL` to the frontend entrypoint when it is ready. The rece
 No database, background workers, downstream admin credentials, or production payments are part of this application. All account data, signing keys and sessions are independent of MyVIA. No source changes in `bevia-miniapp-service` are required.
 
 UI preview: [mobile screenshot](docs/merchant-mobile.png) and [login/home/container gallery](docs/ui-preview.md). Actual checks and pending external integration: [verification record](docs/verification.md).
+
+Appearance and language: use the header selectors for **Light / Dark** and **ID / EN**. Preferences persist in this browser. The initial theme follows the system appearance; language defaults to Indonesian. The built-in receiver follows these preferences; an external VIA frontend manages its own theme/language.

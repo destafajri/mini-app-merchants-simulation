@@ -3,34 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>VIA — Koneksi demo</title>
+  <title><span data-i18n="receiverTitle">VIA — Koneksi demo</span></title>
   <link rel="icon" href="data:,">
+  <script src="/ui-preferences.js"></script>
   <style>
     :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101313;color:#f2f5f3}*{box-sizing:border-box}body{margin:0;padding:45px 24px;min-height:100dvh;display:grid;place-items:center}main{max-width:430px;width:100%}.tag{color:#91a79b;font-size:10px;letter-spacing:1.4px;text-transform:uppercase}.logo{margin:25px 0;background:#d9f4eb;color:#08654b;font-weight:800;font-size:28px;letter-spacing:-2px;width:76px;height:76px;border-radius:23px;display:grid;place-items:center}h1{font-size:30px;letter-spacing:-1px;font-weight:600;margin:0 0 12px}p{color:#98a6a0;font-size:13px;line-height:1.7;margin:0}pre{font-size:12px;line-height:1.8;font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:pre-wrap;overflow-wrap:anywhere;background:#191d1d;border:1px solid #2c3232;padding:22px;border-radius:16px;color:#9cddb9;margin:27px 0 20px;min-height:100px}button{font:600 13px system-ui;width:100%;padding:15px;border:0;border-radius:12px;background:#5bd9a2;color:#103323;cursor:pointer}button:hover{background:#7be7b7}button:disabled{opacity:.5;cursor:wait}button:focus-visible{outline:2px solid #5bd9a2;outline-offset:5px}.note{margin-top:22px;padding-top:20px;border-top:1px solid #2c3232;font-size:11px;color:#83998b}
+    :root[data-theme="light"]{color-scheme:light;background:#f5f8f6;color:#192e22}[data-theme="light"] p,[data-theme="light"] .tag,[data-theme="light"] .note{color:#5c7063}[data-theme="light"] pre{background:#fff;border-color:#dbe5de;color:#226a43}[data-theme="light"] button{background:#187b51;color:white}[data-theme="light"] button:hover{background:#12643f}[data-theme="light"] .note{border-color:#dbe5de}
   </style>
 </head>
-<body>
+<body data-page="receiver">
 <main>
   <span class="tag">Murid Wukong / Mini App demo</span>
   <div class="logo" aria-hidden="true">VIA</div>
-  <h1>Koneksi akunmu.</h1>
-  <p>Halaman ini menguji apakah Mini App dapat menerima token dari akun merchant. Token tidak ditampilkan di halaman.</p>
+  <h1><span data-i18n="receiverHeading">Koneksi akunmu.</span></h1>
+  <p><span data-i18n="receiverCopy">Halaman ini menguji apakah Mini App dapat menerima token dari akun merchant. Token tidak ditampilkan di halaman.</span></p>
   <pre id="status" role="status">Menghubungkan ke akun merchant…</pre>
-  <button id="request">Coba koneksi lagi</button>
-  <p class="note">Ini receiver demo, bukan halaman pembelian PPOB. Tidak ada transaksi atau pembayaran yang dilakukan.</p>
+  <button id="request"><span data-i18n="receiverRetry">Coba koneksi lagi</span></button>
+  <p class="note"><span data-i18n="receiverNote">Ini receiver demo, bukan halaman pembelian PPOB. Tidak ada transaksi atau pembayaran yang dilakukan.</span></p>
 </main>
 <script type="module">
 import {createMerchantBridge} from '/merchant-bridge.js';
+const {t}=window.MerchantUI;
+let pending=false, failed=false;
 const bridge=createMerchantBridge({merchantOrigin:location.origin});
 const button=document.getElementById('request'),status=document.getElementById('status');
 async function run(){
-  button.disabled=true;status.textContent='Menghubungkan ke akun merchant…';
+  button.disabled=true;pending=true;failed=false;status.textContent=t('receiverConnecting');
   try{
     const result=await bridge.getAccessToken();
     status.textContent=JSON.stringify({status:'BRIDGE_OK',token_type:result.token_type,expires_in:result.expires_in,merchant_code:result.merchant_code},null,2);
-  }catch(e){status.textContent=e.message;}
-  finally{button.disabled=false;}
+  }catch(e){failed=true;status.textContent=t('receiverError')+' ('+e.message+')';}
+  finally{pending=false;button.disabled=false;}
 }
+window.addEventListener('mw:preferences',()=>{if(pending)status.textContent=t('receiverConnecting');else if(failed)status.textContent=t('receiverError');});
+window.MerchantUI.apply();
 button.onclick=run;
 run();
 </script>

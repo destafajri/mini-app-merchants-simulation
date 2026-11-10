@@ -67,7 +67,7 @@ def test_configuration_and_assets(client,monkeypatch):
     assert client.get('/api/config').status_code==503
     monkeypatch.delenv('JWT_PRIVATE_KEY_PEM')
     assert client.get('/.well-known/jwks.json').status_code==503
-    for path in ['/','/receiver','/merchant-bridge.js','/api/health']:
+    for path in ['/','/receiver','/merchant-bridge.js','/ui-preferences.js','/api/health']:
         assert client.get(path).status_code==200
 
 

@@ -165,3 +165,9 @@ def receiver():
 @app.get("/merchant-bridge.js")
 def sdk():
     return FileResponse(ROOT / "public/merchant-bridge.js", media_type="text/javascript")
+
+
+@app.get("/ui-preferences.js")
+def ui_preferences():
+    """Serve shared simulator appearance and language controls without credentials."""
+    return FileResponse(ROOT / "public/ui-preferences.js", media_type="text/javascript")

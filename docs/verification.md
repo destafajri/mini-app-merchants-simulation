@@ -60,3 +60,15 @@ The merchant login, dashboard and receiver now use a charcoal/mint theme with or
 - Documentation links and `git diff --check` — PASS.
 - Screenshots use synthetic profile data only. External FE, downstream integration and deployed Vercel revision were not evaluated during this UI task.
 - Telemetry workflow-start timed out at the existing publisher; lifecycle tracking is incomplete. No automatic retries.
+
+
+## Theme and language preferences
+
+Added light/dark and ID/EN selectors with browser preference persistence and shared translations. `/ui-preferences.js` is a public UI asset; auth and bridge payloads are unchanged. No Go service changes.
+
+- `python -m pytest -q` — PASS, 7 tests including the new UI asset route. Existing Starlette TestClient deprecation warning remains.
+- `node tests/test_bridge.mjs` and `node tests/test_preferences.mjs` — PASS. Preference checks cover system defaults, translations, persistence, invalid stored values, storage sync and blocked storage.
+- Chrome at mobile 390 × 844 and desktop 1440 × 1000 — all four theme/language combinations PASS for reload persistence, translated failed login, password toggle, successful login, receiver token/retry and logout, with no horizontal overflow or uncaught JavaScript errors.
+- Chrome 320 px light/EN — login/home overflow PASS. Live error translation, cross-tab and active receiver sync, and controls with blocked localStorage PASS.
+- Public screenshots contain synthetic profile data only. External FE theme propagation is not implemented; external integration and deployed Vercel revision were not evaluated.
+- Telemetry workflow-start timed out at the configured publisher; lifecycle tracking remains incomplete, without automatic retries.
