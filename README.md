@@ -11,7 +11,19 @@ python3 -m venv .venv
 .venv/bin/uvicorn app:app --reload --port 8000
 ```
 
-Open **http://localhost:8000** (use the exact host configured in `.env`). Login as `demo` using the password entered during setup. Until the PPOB frontend is available, click **Uji bridge dengan receiver demo**.
+## Login credentials
+
+| Setting | Value |
+| --- | --- |
+| Local URL | **http://localhost:8000** (use the exact host configured in `.env`) |
+| Username created by setup | **`demo`** |
+| Password | **The password you entered at the `Demo password` prompt** when running `tools/setup_local.py`. There is no built-in shared password. |
+
+If an operator or agent prepared this workstation for you, obtain the generated password from them. On the owner’s prepared workstation, the private `.local-demo-login.txt` file beside this README contains the local username and password. That file is local-only, excluded from Git; it is not included in a fresh clone and is not created by the setup helper itself. Do not upload it.
+
+For Vercel, login uses the account hashes configured in `DEMO_USERS_JSON`; it does not automatically use credentials from another workstation. Use the password corresponding to those hashes. Never paste a password hash into the login form.
+
+After login, click **Uji bridge dengan receiver demo** to test authentication before the PPOB frontend is available.
 
 Set `MINIAPP_FRONTEND_URL` to the frontend entrypoint when it is ready. The receiving frontend must implement the bridge and allow framing by the merchant origin. Restart the local server after changing environment configuration.
 
