@@ -6,18 +6,24 @@ Follow root README. `tools/setup_local.py` asks for a password (minimum 12 chara
 
 ## Environment reference
 
-| Name | Purpose |
-| --- | --- |
-| `MERCHANT_PUBLIC_URL` | Canonical merchant URL; exact browser origin for mutation checks. Local default from setup is `http://localhost:8000`. |
-| `MERCHANT_CODE` | Stable merchant code registered in the Mini App service. |
-| `MINIAPP_FRONTEND_URL` | Full FE entrypoint URL; blank means external launcher disabled. |
-| `JWT_ISSUER` | Stable exact issuer registered with the service; independent from preview deployment hostnames. |
-| `JWT_AUDIENCE` | Exact registered audience, normally `bevia-miniapp`. |
-| `JWT_KEY_ID` | Public `kid` identifying the configured signer. |
-| `JWT_PRIVATE_KEY_PEM` | Server-only unencrypted RSA PEM; actual newlines or literal `\n` accepted. |
-| `SESSION_SECRET` | Server-only cryptographically random value (use 32+ random bytes); stable across instances. |
-| `DEMO_USERS_JSON` | Server-only JSON array of accounts containing `id`, `name`, `username`, `password_hash`. |
-| `MINIAPP_API_BASE_URL` | Smoke-check service origin, e.g. an HTTPS tunnel URL. Not used to proxy frontend requests. |
+Required below means needed for the complete login, JWT/JWKS and bridge demo. Settings are read when the corresponding route is called; `/api/health` alone does not prove they are configured.
+
+| Name | Requirement | Purpose and value source |
+| --- | --- | --- |
+| `MERCHANT_PUBLIC_URL` | Required | URL of this merchant simulator. The browser origin must match it for login/logout/token requests. Use the stable Vercel domain without trailing slash, or `http://localhost:8000` locally. It is not the VIA frontend or Go service URL. |
+| `MERCHANT_CODE` | Required for tokens | Stable merchant identity included in JWT `merchant_code`. Use `murid_wukong_demo`, matching the registered Go service merchant and API path. |
+| `JWT_ISSUER` | Required for tokens | Identity of the token issuer, included in `iss`. Initially use the stable merchant URL; it must exactly match service registration. Do not derive it from changing preview hosts. |
+| `JWT_AUDIENCE` | Required for tokens | Intended token recipient, included in `aud`. Use `bevia-miniapp` unless a different value was agreed and registered in the service. This is a logical identifier, not a URL to call. |
+| `JWT_KEY_ID` | Required for tokens and JWKS | Public signing-key identifier, included in JWT header and JWKS as `kid`. Use `murid-wukong-demo-v1`; it is not a private key or password. |
+| `JWT_PRIVATE_KEY_PEM` | Required for tokens and JWKS; secret | RSA private key (minimum 2048 bits) used to sign JWTs and derive the public JWKS. Generate with setup helper. Actual newlines or literal `\\n` accepted. Never send this to FE or service administrators. |
+| `SESSION_SECRET` | Required for sessions; secret | Random secret used to sign merchant login cookies. Generate with setup helper (32+ random bytes); keep stable across instances. It is separate from the JWT RSA key. Changing it invalidates existing sessions. |
+| `DEMO_USERS_JSON` | Required for usable login; server-only | Configured accounts: stable `id`, display `name`, `username`, `password_hash`. Generate using setup helper. Empty `[]` has no accounts and cannot log in. Never put plaintext passwords in this value. |
+| `MINIAPP_FRONTEND_URL` | Optional until external FE integration | Full VIA FE URL loaded inside the container. Blank disables external launcher but permits built-in receiver testing. Required to open the real FE; FE must implement bridge and allow merchant framing. |
+| `MINIAPP_API_BASE_URL` | Optional for application runtime | Go service origin or HTTPS tunnel used only by `tools/smoke_auth.py`. Required when running that script; not a runtime proxy or iframe destination. |
+
+For **login only**, configure `MERCHANT_PUBLIC_URL`, `SESSION_SECRET` and a non-empty `DEMO_USERS_JSON`. For **receiver demo or external bridge token issuance**, configure all eight required variables above. The public JWKS endpoint needs the RSA key and key ID. No backend URL is necessary for the receiver demo.
+
+To set up Vercel, generate `.env` locally, then enter its values in Project Settings → Environment Variables → Production. Replace the generated localhost merchant URL and issuer with the chosen stable deployment URL. Paste values without `NAME=` or outer dotenv single quotes; preserve JSON double quotes. Save and redeploy. The `.env.example` file is documentation and does not populate Vercel automatically.
 
 Demo account shape:
 
