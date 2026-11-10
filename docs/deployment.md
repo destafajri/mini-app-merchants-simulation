@@ -29,7 +29,7 @@ Hash algorithm: Python `hashlib.scrypt(password.encode(), salt=bytes.fromhex(sal
 
 ## Vercel
 
-1. Import this component repository into Vercel. For the first release select branch `feat/merchant-miniapp-simulator` explicitly; do not assume an empty repository already has `main`.
+1. Import this component repository into Vercel. Select `main` as the production branch.
 2. Use FastAPI framework detection, root directory `.`, entrypoint `app.py`, dependencies from `requirements.txt`. No database or persistent filesystem is required. [Official FastAPI deployment guide](https://vercel.com/docs/frameworks/backend/fastapi)
 3. Configure environment variables privately in Vercel, including a stable merchant domain, signing key, session secret and demo account hashes. `.env.example` contains placeholders only. Preview and production must use their own consistent URL/configuration.
 4. Configure `MINIAPP_FRONTEND_URL` when the FE team provides it. Redeploy after environment changes.
