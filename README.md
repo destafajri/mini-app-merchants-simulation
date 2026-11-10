@@ -15,15 +15,16 @@ python3 -m venv .venv
 
 | Setting | Value |
 | --- | --- |
-| Local URL | **http://localhost:8000** (use the exact host configured in `.env`) |
-| Username created by setup | **`demo`** |
-| Password | **The password you entered at the `Demo password` prompt** when running `tools/setup_local.py`. There is no built-in shared password. |
+| Local URL | **http://localhost:8000** |
+| Usernames | **`demo`, `demo2`, `demo3`, `demo4`, `demo5`, `demo6`, `demo7`, `demo8`, `demo9`, `demo10`** |
+| Password for all ten accounts | **`MuridWukongDemo123!`** |
+| Account fixture | [`fixtures/demo_users.json`](fixtures/demo_users.json) — synthetic profiles, stable IDs, and password hashes |
 
-If an operator or agent prepared this workstation for you, obtain the generated password from them. On the owner’s prepared workstation, the private `.local-demo-login.txt` file beside this README contains the local username and password. That file is local-only, excluded from Git; it is not included in a fresh clone and is not created by the setup helper itself. Do not upload it.
-
-For Vercel, login uses the account hashes configured in `DEMO_USERS_JSON`; it does not automatically use credentials from another workstation. Use the password corresponding to those hashes. Never paste a password hash into the login form.
+These are intentionally public simulator credentials, identical locally and on Vercel. No registration or user environment variable is needed. Do not use them for real accounts or sensitive data. The setup helper generates private signing configuration only; it no longer prompts for a password. Existing `DEMO_USERS_JSON` environment values are ignored and can be removed. Previous workstation-generated login passwords are no longer used.
 
 After login, click **Uji bridge dengan receiver demo** to test authentication before the PPOB frontend is available.
+
+Only three environment variables are required: `MERCHANT_PUBLIC_URL`, `JWT_PRIVATE_KEY_PEM` and `SESSION_SECRET`. Generate the local key/secret with the setup helper; for Vercel enter these values in the project environment and change the merchant URL to its stable HTTPS domain.
 
 Set `MINIAPP_FRONTEND_URL` to the frontend entrypoint when it is ready. The receiving frontend must implement the bridge and allow framing by the merchant origin. Restart the local server after changing environment configuration.
 

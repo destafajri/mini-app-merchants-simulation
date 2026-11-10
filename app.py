@@ -1,5 +1,4 @@
 """Stateless demo merchant identity provider and browser container."""
-import base64
 import hashlib
 import hmac
 import json
@@ -21,11 +20,18 @@ load_dotenv()
 ROOT = Path(__file__).parent
 app = FastAPI(title="Merchant Simulator", version="1.0.0")
 COOKIE = "merchant_session"
+DEFAULTS = {
+    "MERCHANT_CODE": "murid_wukong_demo",
+    "JWT_AUDIENCE": "bevia-miniapp",
+    "JWT_KEY_ID": "murid-wukong-demo-v1",
+}
 
 
 def setting(name):
-    """Require explicit configuration rather than inventing deployment identity."""
-    value = os.getenv(name, "")
+    """Require deployment secrets and URL; use explicit simulator identity defaults."""
+    value = os.getenv(name, "") or DEFAULTS.get(name, "")
+    if not value and name == "JWT_ISSUER":
+        value = setting("MERCHANT_PUBLIC_URL")
     if not value:
         raise HTTPException(503, detail={"code": "CONFIGURATION_REQUIRED", "field": name})
     return value
@@ -42,8 +48,8 @@ def origin(url):
 
 
 def users():
-    """Read demo accounts from server-only configuration."""
-    return json.loads(setting("DEMO_USERS_JSON"))
+    """Load repository-owned synthetic accounts, independent of environment variables."""
+    return json.loads((ROOT / "fixtures/demo_users.json").read_text())
 
 
 def signer():

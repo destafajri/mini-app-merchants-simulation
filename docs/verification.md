@@ -22,6 +22,18 @@ Python verification used a local 3.14 environment. `requirements.lock.txt` recor
 
 Telemetry workflow-start and stage-start delivery attempts timed out at the configured publisher. No publisher acceptance or dashboard ingestion was verified; lifecycle tracking is incomplete. No automated retries were performed.
 
-## Local first-run follow-up
+## Local first-run follow-up (historical setup behavior)
 
 The first real setup invocation exposed a `Path.open(opener=...)` incompatibility. The helper now uses built-in `open` with an exclusive, owner-only opener. A subprocess regression test verifies successful env generation, password hash usability, permissions, no plaintext password in env/output, and overwrite refusal. `python -m pytest -q`: PASS, 5 tests. SDK checks remain PASS. Generated local configuration and login details are excluded from version control.
+
+## Repository demo accounts and reduced environment
+
+Current account configuration supersedes the historical setup behavior above. Ten synthetic accounts now come from `fixtures/demo_users.json` with the public password documented in README. `DEMO_USERS_JSON` is ignored. Normal runtime requires only merchant URL, RSA private key and session secret; auth identity defaults remain overridable.
+
+- `python -m pytest -q` — PASS, 6 tests, including all ten fixture logins and unique IDs, legacy user env ignored, default issuer/audience/merchant/key ID, signed JWT subject, and non-interactive private setup with overwrite protection.
+- `node tests/test_bridge.mjs` — PASS.
+- Local Chrome at 390 × 844 — PASS: both `demo` and `demo10` login, greeting, embedded receiver `BRIDGE_OK`, back, logout.
+- `GET /fixtures/demo_users.json` — 404, as intended; account fixture is not an HTTP asset.
+- Compile check, annotated example dotenv parsing (five active keys), Markdown relative links, and whitespace diff check — PASS.
+- Local RSA key and session secret preserved during config simplification. No Go service changes or real downstream integration checks performed.
+- Telemetry workflow-start delivery timed out; no publisher acceptance or complete lifecycle tracking established. No automated retry.
