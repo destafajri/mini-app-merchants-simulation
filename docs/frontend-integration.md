@@ -76,6 +76,17 @@ Failure response:
 
 Parent validates exact configured FE origin, `event.source === iframe.contentWindow`, request type and bounded request ID. SDK validates exact merchant origin, parent window, response type, matching request ID and response fields. Other messages are ignored. Only one token request is processed by the parent at a time; serialize requests in the FE, including refreshes. Pending requests can time out if the container closes or navigates.
 
+## GoPay-like auth_code bridge
+
+For a Mini App server that exchanges a code (see the [backend guide](backend-integration.md#gopay-like-auth_code-exchange)), use the second SDK method. The JWT method above is unchanged.
+
+```javascript
+const { authCode, expiresIn } = await bridge.getAuthCode();
+// Send authCode to YOUR server immediately; it exchanges it. Never store or log it in the browser.
+```
+
+Request from iframe to parent: `{"type":"miniapp.authcode.request","request_id":"<random UUID>"}`. Success: `{"type":"miniapp.authcode.response","request_id":"<same UUID>","data":{"authCode":"<string, at most 2048 characters>","expiresIn":300}}`. Failure: `{"type":"miniapp.authcode.response","request_id":"<same UUID>","error":{"code":"UNAUTHENTICATED"}}`; the other failure code is `AUTH_CODE_UNAVAILABLE`. The origin, source window, request ID, timeout (10 seconds, `BRIDGE_TIMEOUT`) and listener-cleanup rules are the same as for `getAccessToken()`, and the parent processes one bridge request at a time across both message types, so serialize token and code requests. The code is valid for 300 seconds and is not single-use.
+
 ## Token and failure handling
 
 | Error | FE action |

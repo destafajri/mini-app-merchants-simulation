@@ -83,3 +83,24 @@ Replaced the appearance/language dropdowns with labeled two-position switches an
 - Local Chrome at 320, 390 and 1440 px — PASS for all four theme/language combinations: click, Enter/Space keyboard activation, reload persistence, login, switches after login, embedded receiver, logout and horizontal overflow. Switch hit areas are at least 44 px high. No uncaught page errors.
 - Chrome with blocked localStorage — toggle clicks PASS. Screenshots contain synthetic account data only.
 - External FE and deployed Vercel revision were not evaluated. Telemetry workflow-start timed out at the existing publisher; lifecycle tracking remains incomplete without retry.
+
+
+## GoPay-like auth_code mode
+
+Added `POST /api/gopay/auth-code`, `POST /v1/mini-apps/authorizations/token`, `getAuthCode()` in the SDK and `miniapp.authcode.request/response` handling in the container page. The JWT endpoints, JWKS and `getAccessToken()` are unchanged. Reviewed 2026-11-12; local results only.
+
+- `python -m pytest -q` — PASS, 15 tests (the 7 existing plus 8 new): issuance happy path, unauthenticated/CSRF refusal, exchange returning the right user ID, `Request-Id` echo, wrong/missing/malformed Basic credential (401), unset or empty credential env (503), tampered/truncated/oversized/invalid-body codes (uniform 400), expiry at 290 s accepted and 301 s refused using the same signer-timestamp patch as the session expiry test, `Request-Id`/`Debug-Id` validation, login cookie not accepted as a code and vice versa, code and token not decodable as each other, no credential/code echo, `frame-ancestors`/`no-store` present and no CORS headers, JWT mode still working with the credential unset. The setup test also checks the generated credential is present, random and not printed. Existing Starlette TestClient deprecation warning remains.
+- `node tests/test_bridge.mjs` — PASS (unchanged). `node tests/test_bridge_authcode.mjs` — PASS: forged origin, wrong source, wrong request ID, wrong response type, malformed or oversized payloads ignored; success, error, timeout, listener cleanup and standalone failure.
+- `node tests/test_preferences.mjs` — PASS.
+- `python -m compileall -q app.py tools tests`, syntax check of the inline module script in `public/index.html`, relative Markdown link check of the touched docs — PASS.
+- A throwaway Node harness (not committed) ran the container page script with stubbed DOM/fetch: a valid `miniapp.authcode.request` and `miniapp.auth.request` from the frame origin/window each produced exactly one API call and one reply to the exact origin; wrong origin, wrong source, over-long request ID, non-string or prototype-name types and null data caused no call — PASS. No real browser was used for this feature.
+- NOT VERIFIED: behavior against the real GoPay/Midtrans service (the simulator follows the documented shape only); the Mini App server and Nuxt frontend consuming this contract; a deployed Vercel revision; replay protection (none by design on serverless); rate limiting of the exchange endpoint (none).
+
+### Local end to end with `bevia-miniapp-service` and the Nuxt frontend (2026-11-12)
+
+Run locally with this simulator on port 8000, the Mini App service on branch `feat/authcode-session` against a throwaway PostgreSQL and the workspace mock Product/Order/PG, and the MyPertamina frontend in `authcode` mode on port 3000. Throwaway secrets were generated for the run and are not recorded here.
+
+- A scripted run of 26 checks — PASS 26/26: sim login, `POST /api/gopay/auth-code` (200, `expiresIn` 300), `POST /api/v1/mini-app/{code}/session` (200, `Bearer`, `expires_in` within 900), catalog with the session (200, the three mock products) and history (200). Refusals: no bearer, tampered or garbage code, an unknown merchant, a `jwks_v1` merchant and a disabled `authcode_v1` merchant all 401, an empty code 400. The session of one merchant on another and a session with a flipped signature are 401. The host endpoint returned 401 for a wrong credential, 200 for the right one, and `AuthCode Not Found` for a bad code. A second exchange of the same code inside its 300 seconds succeeded, which confirms the documented lack of single-use enforcement.
+- A browser run (Playwright Chromium): login as `demo`, open the Mini App from the container; the network log shows `POST /api/gopay/auth-code` 200, `POST /api/miniapp/gopay_sim_demo/session` 200, `GET /products` 200, and the catalog rendered three vouchers.
+- A scan of the service and simulator logs for the auth code, the session token, the provider credential and the signing key found none of them.
+- NOT VERIFIED: real GoPay/Midtrans behavior (single use, token reuse, error bodies), the Vercel deployments, staging, replay protection, rate limiting.

@@ -20,6 +20,26 @@ export function createMerchantBridge({merchantOrigin}) {
         window.addEventListener('message', receive);
         window.parent.postMessage({type:'miniapp.auth.request', request_id}, merchantOrigin);
       });
+    },
+    /** GoPay-like mode: ask the host for a short-lived auth_code; a server exchanges it. */
+    getAuthCode() {
+      return new Promise((resolve, reject) => {
+        if (window.parent === window) return reject(new Error('CONTAINER_REQUIRED'));
+        const request_id = crypto.randomUUID();
+        const cleanup = () => { clearTimeout(timer); window.removeEventListener('message', receive); };
+        const receive = event => {
+          if (event.origin !== merchantOrigin || event.source !== window.parent) return;
+          const data = event.data;
+          if (!data || data.type !== 'miniapp.authcode.response' || data.request_id !== request_id) return;
+          if (data.error && typeof data.error.code === 'string') { cleanup(); reject(new Error(data.error.code)); }
+          else if (data.data && typeof data.data.authCode === 'string' && data.data.authCode.length > 0 && data.data.authCode.length <= 2048 && typeof data.data.expiresIn === 'number') {
+            cleanup(); resolve(data.data);
+          }
+        };
+        const timer = setTimeout(() => { cleanup(); reject(new Error('BRIDGE_TIMEOUT')); }, 10000);
+        window.addEventListener('message', receive);
+        window.parent.postMessage({type:'miniapp.authcode.request', request_id}, merchantOrigin);
+      });
     }
   };
 }

@@ -36,6 +36,7 @@ The fourth required setting is:
 | `JWT_ISSUER` | Value of `MERCHANT_PUBLIC_URL` | Override for an explicitly registered issuer. Changing merchant URL otherwise also changes the issuer. |
 | `JWT_AUDIENCE` | `bevia-miniapp` | Override if a different audience is agreed and registered. |
 | `JWT_KEY_ID` | `murid-wukong-demo-v1` | Override to identify a different signing key, coordinating JWKS/rotation with the service. |
+| `GOPAY_SIM_BASIC_CREDENTIAL` | None (unset) | Secret. Enables the GoPay-like auth-code exchange. It is the exact string callers send after `Authorization: Basic ` and is compared verbatim. Unset or empty makes `POST /v1/mini-apps/authorizations/token` answer 503; the JWT mode is unaffected. Setup generates a random value only for a freshly created `.env`; for Vercel set your own random value privately and share it only with the Mini App server that performs the exchange. It reuses `SESSION_SECRET` to sign codes and tokens, so that secret must also stay stable. |
 
 Unset or empty optional identity overrides use their defaults. Existing non-empty overrides continue to work. Effective issuer, audience, merchant code and JWKS must match service registration, regardless of defaults. Keep the merchant URL stable after registration.
 

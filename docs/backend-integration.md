@@ -43,6 +43,41 @@ Merchants are created disabled. Enabling requires a valid downstream merchant id
 
 The inspected service permits RS256/ES256/EdDSA and maximum TTL 900 seconds with 30 seconds clock leeway; this simulator deliberately issues only RS256/300-second tokens. Use NTP. Stable subject is the ownership key: changing it creates a separate identity/history. There is no refresh token; request another token through the active merchant session.
 
+## GoPay-like auth_code exchange
+
+An alternative to the JWT contract, for a Mini App server that implements the GoPay/Midtrans-shaped flow. The frontend obtains an `authCode` from the container (see the [frontend guide](frontend-integration.md#gopay-like-auth_code-bridge)) and sends it to the Mini App server, which exchanges it:
+
+```sh
+curl -X POST "$MERCHANT_PUBLIC_URL/v1/mini-apps/authorizations/token" \
+  -H "Authorization: Basic $GOPAY_SIM_BASIC_CREDENTIAL" \
+  -H "Content-Type: application/json" -H "Request-Id: <optional, <= 100 chars>" \
+  -d '{"auth_code":"<authCode>"}'
+```
+
+Success is 200 `{"success":true,"data":{"auth_token":"...","gopay_account_id":"demo-user-001"}}`. `gopay_account_id` is the stable subject to use as the ownership key (the same IDs as the JWT `sub`). A failed code returns 400 `AuthCode Not Found`; a wrong credential 401 `Unauthorized`; 5xx is the only retriable class. Guidelines:
+
+- Hold `GOPAY_SIM_BASIC_CREDENTIAL` only on the server that exchanges codes; never in the frontend, the BFF response, logs or analytics. Treat the `authCode` and `auth_token` the same way (the code is short-lived but secret while valid).
+- Exchange immediately after receiving the code; it expires 300 seconds after issue. Do not assume single use: the simulator cannot prevent replay within that window, while the real provider's replay rule is not verified here.
+- The `auth_token` is signed and never expires; the simulator defines no endpoint that consumes it. Persist it only if your design needs it and protect it like a credential.
+- Call from a server, with bounded timeouts, to the configured merchant URL only.
+
+This mode needs `SESSION_SECRET` and `GOPAY_SIM_BASIC_CREDENTIAL`; it does not need the RSA key. The JWT mode is unchanged and can be used at the same time.
+
+### Using it with `bevia-miniapp-service`
+
+The Mini App service redeems the code itself (authenticator key `authcode_v1`) and answers with its own short session token, which the frontend then sends as the bearer. The service needs `AUTHCODE_PROVIDER_BASE_URL` (this simulator's origin), `AUTHCODE_PROVIDER_BASIC_CREDENTIAL` (the exact value of `GOPAY_SIM_BASIC_CREDENTIAL`) and `SESSION_SIGNING_KEY`; its `docs/merchant-integration.md` has the endpoint contract. A merchant of this kind carries no issuer, audience or JWKS URL, so the administrator registers it with the authenticator key only (use a merchant code different from the JWT one):
+
+```json
+{
+  "code": "gopay_sim_demo",
+  "name": "GoPay-like Demo Merchant",
+  "downstream_merchant_id": "<UUID supplied by Product/Order owners>",
+  "auth": { "authenticator_key": "authcode_v1" }
+}
+```
+
+The service answers `POST /api/v1/mini-app/{merchant_code}/session` with `{"auth_code":"..."}` and returns `{access_token, token_type: "Bearer", expires_in}`. An unknown merchant, a disabled merchant, a merchant on another authenticator and a rejected code all answer `401`; the host is called only for an enabled `authcode_v1` merchant.
+
 ## BFF forwarding guidelines
 
 Accept bearer JWT from the FE and forward it unchanged to a **fixed configured** service base URL and merchant prefix. If the BFF itself makes identity-based decisions, verify signature, issuer, audience, expiry, algorithm and merchant first. Decoding JWT claims alone is insufficient.

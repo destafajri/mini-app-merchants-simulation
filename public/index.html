@@ -232,13 +232,18 @@ $('quickServices').onclick=()=>scrollToSection('services');
 $('navServices').onclick=()=>scrollToSection('services');
 $('navAccount').onclick=()=>scrollToSection('logout');
 $('navHome').onclick=()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+const bridgeCalls={
+  'miniapp.auth.request':{response:'miniapp.auth.response',path:'/api/miniapp/token',failure:'TOKEN_UNAVAILABLE'},
+  'miniapp.authcode.request':{response:'miniapp.authcode.response',path:'/api/gopay/auth-code',failure:'AUTH_CODE_UNAVAILABLE'}
+};
 window.addEventListener('message',async event=>{
   const msg=event.data;
-  if(!active||busy||event.origin!==frameOrigin||event.source!==$('miniapp').contentWindow||!msg||msg.type!=='miniapp.auth.request'||typeof msg.request_id!=='string'||msg.request_id.length>100)return;
+  const call=msg&&typeof msg.type==='string'&&Object.hasOwn(bridgeCalls,msg.type)?bridgeCalls[msg.type]:null;
+  if(!active||busy||event.origin!==frameOrigin||event.source!==$('miniapp').contentWindow||!call||typeof msg.request_id!=='string'||msg.request_id.length>100)return;
   busy=true;const run=generation,target=frameOrigin;
-  let reply={type:'miniapp.auth.response',request_id:msg.request_id};
-  try{reply.data=await api('/api/miniapp/token',{});}
-  catch(e){reply.error={code:e.message==='UNAUTHENTICATED'?'UNAUTHENTICATED':'TOKEN_UNAVAILABLE'};}
+  let reply={type:call.response,request_id:msg.request_id};
+  try{reply.data=await api(call.path,{});}
+  catch(e){reply.error={code:e.message==='UNAUTHENTICATED'?'UNAUTHENTICATED':call.failure};}
   finally{busy=false;}
   if(!active||run!==generation)return;
   clearTimeout(timer);$('miniapp').contentWindow.postMessage(reply,target);

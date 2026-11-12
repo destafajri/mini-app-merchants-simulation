@@ -9,6 +9,8 @@ Audience: frontend engineers building the VIA Mini App and backend engineers con
 5. [Configuration and deployment](deployment.md) — local setup, environment reference, Vercel, tunnel, keys and limitations.
 6. [Troubleshooting](troubleshooting.md) — symptoms, causes and checks.
 
+The simulator offers two modes: the JWT/JWKS mode (items 2-4) and a GoPay-like `auth_code` exchange mode, documented in [the API reference](api-reference.md#gopay-like-auth_code-mode), [backend guide](backend-integration.md#gopay-like-auth_code-exchange), [frontend guide](frontend-integration.md#gopay-like-auth_code-bridge) and [architecture](architecture.md#gopay-like-auth_code-sequence).
+
 This documentation specifies the implemented simulator interface. It does not establish downstream contract approval or claim a successful deployed integration. Example domains and identities are placeholders. Do not use real customer data in this simulator.
 
 [Local verification record](verification.md) and [mobile screenshot](merchant-mobile.png) describe the actual checked scope and outstanding integration checks.
