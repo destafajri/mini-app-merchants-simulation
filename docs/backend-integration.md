@@ -65,16 +65,27 @@ This mode needs `SESSION_SECRET` and `GOPAY_SIM_BASIC_CREDENTIAL`; it does not n
 
 ### Using it with `bevia-miniapp-service`
 
-The Mini App service redeems the code itself (authenticator key `authcode_v1`) and answers with its own short session token, which the frontend then sends as the bearer. The service needs `AUTHCODE_PROVIDER_BASE_URL` (this simulator's origin), `AUTHCODE_PROVIDER_BASIC_CREDENTIAL` (the exact value of `GOPAY_SIM_BASIC_CREDENTIAL`) and `SESSION_SIGNING_KEY`; its `docs/merchant-integration.md` has the endpoint contract. A merchant of this kind carries no issuer, audience or JWKS URL, so the administrator registers it with the authenticator key only (use a merchant code different from the JWT one):
+The Mini App service redeems the code itself (authenticator key `authcode_v1`) and answers with its own short session token, which the frontend then sends as the bearer. Each merchant of this kind has its **own** host and credential: the administrator enters them per merchant through the service's admin API, and the service stores the credential encrypted. Nothing about this simulator is configured in the service's environment. The service's `docs/merchant-integration.md` has the endpoint contract.
+
+For this simulator the merchant code is `wukong_apps`, the host (`base_url`) is the simulator's origin and the credential is the exact value of `GOPAY_SIM_BASIC_CREDENTIAL`, with no base64 re-encoding. A merchant of this kind carries no issuer, audience or JWKS URL, so the administrator registers it with the authenticator key only:
 
 ```json
 {
-  "code": "gopay_sim_demo",
-  "name": "GoPay-like Demo Merchant",
+  "code": "wukong_apps",
+  "name": "Wukong Apps",
   "downstream_merchant_id": "<UUID supplied by Product/Order owners>",
   "auth": { "authenticator_key": "authcode_v1" }
 }
 ```
+
+Then, with the credential typed into a secret variable and never into a note or chat:
+
+```text
+PUT /api/v1/admin/mini-app/merchants/{merchant_id}/auth-provider
+{ "base_url": "https://<this simulator origin>", "credential": "<GOPAY_SIM_BASIC_CREDENTIAL>" }
+```
+
+Both fields are always required. A later `GET` on the same path shows only whether a credential is set. Payment options and `PUT .../enable` follow as for any merchant; enabling is refused until the provider is stored.
 
 The service answers `POST /api/v1/mini-app/{merchant_code}/session` with `{"auth_code":"..."}` and returns `{access_token, token_type: "Bearer", expires_in}`. An unknown merchant, a disabled merchant, a merchant on another authenticator and a rejected code all answer `401`; the host is called only for an enabled `authcode_v1` merchant.
 
