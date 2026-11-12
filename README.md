@@ -1,6 +1,6 @@
 # Murid Wukong Merchant Mini App Simulator
 
-A Python/FastAPI merchant application with demo-user login, a browser Mini App container, an asymmetric JWT issuer, and a public JWKS endpoint. This is a simulator, not a GoPay integration or a PPOB frontend.
+A Python/FastAPI merchant application with demo-user login, a browser Mini App container, an asymmetric JWT issuer, and a public JWKS endpoint. This is a simulator, not a GoPay integration or a PPOB frontend. It offers two authentication modes: the original JWT/JWKS mode and an additional GoPay-like `auth_code` exchange mode.
 
 Start with the [integration documentation](docs/README.md), including separate [frontend](docs/frontend-integration.md) and [backend](docs/backend-integration.md) guidelines.
 
@@ -34,8 +34,18 @@ Four environment variables are required for the full demo: `MERCHANT_PUBLIC_URL`
 
 Set `MINIAPP_FRONTEND_URL` to the frontend entrypoint when it is ready. The receiving frontend must implement the bridge and allow framing by the merchant origin. Restart the local server after changing environment configuration.
 
+## GoPay-like auth_code mode
+
+In addition to the JWT mode, the simulator mimics the shape of the GoPay/Midtrans "User Authentication" flow: the browser asks the host for a short-lived `auth_code`, and a **server** exchanges it with the host's token endpoint.
+
+1. The Mini App frontend calls `getAuthCode()` from `merchant-bridge.js` (message pair `miniapp.authcode.request` / `miniapp.authcode.response`); the container calls `POST /api/gopay/auth-code` with the login session and returns `{authCode, expiresIn: 300}`.
+2. The Mini App server calls `POST /v1/mini-apps/authorizations/token` with `Authorization: Basic <GOPAY_SIM_BASIC_CREDENTIAL>` and `{"auth_code": "..."}` and receives `{"success": true, "data": {"auth_token": "...", "gopay_account_id": "demo-user-001"}}`.
+
+Set `GOPAY_SIM_BASIC_CREDENTIAL` (secret; see `.env.example`) to enable the exchange; without it the endpoint answers 503. The code is a stateless signed value valid for 300 seconds and is **not single-use** (serverless keeps no state). The existing JWT endpoints are unchanged. Details: [API reference](docs/api-reference.md#gopay-like-auth_code-mode), [backend guide](docs/backend-integration.md#gopay-like-auth_code-exchange). The real GoPay behavior was not verified.
+
 ```sh
 .venv/bin/python -m pytest -q
+node tests/test_bridge.mjs && node tests/test_bridge_authcode.mjs && node tests/test_preferences.mjs
 ```
 
 No database, background workers, downstream admin credentials, or production payments are part of this application. All account data, signing keys and sessions are independent of MyVIA. No source changes in `bevia-miniapp-service` are required.

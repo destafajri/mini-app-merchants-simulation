@@ -11,14 +11,16 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from pydantic import BaseModel, Field
+from fastapi.responses import FileResponse, JSONResponse
+from itsdangerous import BadData, BadSignature, SignatureExpired, URLSafeSerializer, URLSafeTimedSerializer
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 load_dotenv()
 ROOT = Path(__file__).parent
 app = FastAPI(title="Merchant Simulator", version="1.0.0")
 COOKIE = "merchant_session"
+AUTH_CODE_TTL = 300
+EXCHANGE_PATH = "/v1/mini-apps/authorizations/token"
 DEFAULTS = {
     "MERCHANT_CODE": "murid_wukong_demo",
     "JWT_AUDIENCE": "bevia-miniapp",
@@ -51,9 +53,19 @@ def users():
     return json.loads((ROOT / "fixtures/demo_users.json").read_text())
 
 
-def signer():
-    """Use a stable secret across serverless instances."""
-    return URLSafeTimedSerializer(setting("SESSION_SECRET"), salt="merchant-session-v1")
+def signer(salt="merchant-session-v1"):
+    """Use a stable secret across serverless instances; each salt is a separate token namespace."""
+    return URLSafeTimedSerializer(setting("SESSION_SECRET"), salt=salt)
+
+
+def code_signer():
+    """Short-lived GoPay-like auth codes; never interchangeable with the login cookie."""
+    return signer("gopay-auth-code-v1")
+
+
+def token_signer():
+    """Non-expiring GoPay-like auth tokens (no timestamp, own salt)."""
+    return URLSafeSerializer(setting("SESSION_SECRET"), salt="gopay-auth-token-v1")
 
 
 def identity(request):
@@ -86,6 +98,22 @@ class Login(BaseModel):
     """Bound login input size."""
     username: str = Field(min_length=1, max_length=128)
     password: str = Field(min_length=1, max_length=256)
+
+
+class Exchange(BaseModel):
+    """Strict, bounded server-to-server exchange input."""
+    model_config = ConfigDict(extra="forbid")
+    auth_code: str = Field(min_length=1, max_length=2048)
+
+
+def gopay_error(status, description, request_id=None):
+    """Provider-style failure body; descriptions never reveal why a code was rejected."""
+    return JSONResponse({"success": False, "error": {"description": description}}, status_code=status, headers={"Request-Id": request_id} if request_id else None)
+
+
+def header_ok(value):
+    """Optional correlation headers must be short printable ASCII."""
+    return value is None or (0 < len(value) <= 100 and value.isascii() and value.isprintable())
 
 
 @app.middleware("http")
@@ -137,6 +165,44 @@ def token(request: Request):
     claims = dict(iss=setting("JWT_ISSUER"), aud=setting("JWT_AUDIENCE"), sub=user["id"], merchant_code=merchant, iat=now, exp=now + 300, name=user["name"])
     encoded = jwt.encode(claims, private_key(), algorithm="RS256", headers={"kid": setting("JWT_KEY_ID")})
     return {"access_token": encoded, "token_type": "Bearer", "expires_in": 300, "merchant_code": merchant}
+
+
+@app.post("/api/gopay/auth-code")
+def gopay_auth_code(request: Request):
+    """Browser-facing: issue a stateless 300-second auth code for the signed-in user."""
+    csrf(request)
+    user = identity(request)
+    return {"authCode": code_signer().dumps(user["id"]), "expiresIn": AUTH_CODE_TTL}
+
+
+@app.post(EXCHANGE_PATH)
+async def gopay_exchange(request: Request):
+    """Server-to-server (not browser-facing, no CORS): exchange an auth code for a non-expiring auth token."""
+    expected = setting("GOPAY_SIM_BASIC_CREDENTIAL")
+    header = request.headers.get("authorization", "")
+    given = header[6:] if header.startswith("Basic ") else ""
+    if not (header.startswith("Basic ") and hmac.compare_digest(given.encode(), expected.encode())):
+        return gopay_error(401, "Unauthorized")
+    request_id = request.headers.get("request-id")
+    if not (header_ok(request_id) and header_ok(request.headers.get("debug-id"))):
+        return gopay_error(400, "Invalid request headers")
+    reply = {"Request-Id": request_id} if request_id else None
+    try:
+        raw = await request.body()
+        if len(raw) > 4096:
+            raise ValueError
+        uid = code_signer().loads(Exchange.model_validate_json(raw).auth_code, max_age=AUTH_CODE_TTL)
+        user = next((u for u in users() if u["id"] == uid), None) if isinstance(uid, str) else None
+        if user is None:
+            raise ValueError
+        auth_token = token_signer().dumps(user["id"])
+    except (BadData, ValueError):
+        return gopay_error(400, "AuthCode Not Found", request_id)
+    except HTTPException:
+        raise
+    except Exception:
+        return gopay_error(500, "Internal Server Error", request_id)
+    return JSONResponse({"success": True, "data": {"auth_token": auth_token, "gopay_account_id": user["id"]}}, headers=reply)
 
 
 @app.get("/.well-known/jwks.json")

@@ -36,6 +36,39 @@ Requires session and exact Origin. No body is needed; identity is resolved exclu
 
 No refresh token is issued. A new call issues a fresh five-minute token for the same stable subject. This endpoint is consumed by the merchant parent, not directly by the iframe.
 
+## GoPay-like auth_code mode
+
+Two additional endpoints. The simulator mimics the real contract (Midtrans "User Authentication": `getAuthCode` in the Mini App, then `POST /v1/mini-apps/authorizations/token` with Basic authentication returning `auth_token` and `gopay_account_id`); real provider behavior was not verified.
+
+### POST /api/gopay/auth-code
+
+Browser-facing, same-origin. Requires session and exact Origin, exactly like `/api/miniapp/token`; the body is ignored and identity comes only from the session. Not logged in: 401 `UNAUTHENTICATED`. Returns 200:
+
+```json
+{"authCode":"<opaque signed string>","expiresIn":300}
+```
+
+The code is a stateless `itsdangerous` value (own salt, carrying the user ID and issue time), valid for 300 seconds. It is **not single-use**: the same code can be exchanged repeatedly until it expires, because the Vercel serverless deployment keeps no shared state.
+
+### POST /v1/mini-apps/authorizations/token
+
+Server-to-server; not browser-facing (no CORS, no cookie, no Origin check). Headers: `Authorization: Basic <credential>` (required; the credential is the value of `GOPAY_SIM_BASIC_CREDENTIAL`, compared verbatim in constant time, not base64-decoded), `Content-Type: application/json`, optional `Request-Id` and `Debug-Id` (at most 100 printable ASCII characters; `Request-Id` is echoed as a response header). Body (strict, at most 4096 bytes, unknown fields refused):
+
+```json
+{"auth_code":"<authCode>"}
+```
+
+| Status | Body | When |
+| --- | --- | --- |
+| 200 | `{"success":true,"data":{"auth_token":"<signed opaque, no expiry>","gopay_account_id":"demo-user-001"}}` | Valid, unexpired code. `gopay_account_id` is the stable demo user ID. |
+| 400 | `{"success":false,"error":{"description":"AuthCode Not Found"}}` | Any problem with the code or body: expired, tampered, wrong type (login cookie, auth token), unknown user, missing/oversized/invalid JSON. The body never says which. |
+| 400 | `{"success":false,"error":{"description":"Invalid request headers"}}` | Invalid `Request-Id` or `Debug-Id`. |
+| 401 | `{"success":false,"error":{"description":"Unauthorized"}}` | Missing or wrong Basic credential. Evaluated before the body. |
+| 500 | `{"success":false,"error":{"description":"Internal Server Error"}}` | Unexpected error; treat as retriable. |
+| 503 | `{"detail":{"code":"CONFIGURATION_REQUIRED","field":"GOPAY_SIM_BASIC_CREDENTIAL"}}` | Credential (or `SESSION_SECRET`) not configured. The endpoint never accepts anything in that state. |
+
+The auth code, credential and auth token are never logged or echoed in any response, including validation failures (the handler parses the body itself instead of using FastAPI's 422 detail, which echoes inputs). The response-security middleware still applies (`Cache-Control: no-store`, `frame-ancestors 'none'`); these are harmless for a server client.
+
 ## GET /.well-known/jwks.json
 
 Public, no cookie or Origin required. Success 200:

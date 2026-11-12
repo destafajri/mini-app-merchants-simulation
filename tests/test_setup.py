@@ -22,6 +22,8 @@ def test_setup_creates_private_usable_env_and_preserves_existing(tmp_path):
     assert 'JWT_ISSUER' not in values
     assert values['MERCHANT_PUBLIC_URL']=='http://localhost:8000'
     assert len(values['SESSION_SECRET'])>=43
+    assert len(values['GOPAY_SIM_BASIC_CREDENTIAL'])>=43 and values['GOPAY_SIM_BASIC_CREDENTIAL']!=values['SESSION_SECRET']
+    assert values['GOPAY_SIM_BASIC_CREDENTIAL'] not in result.stdout+result.stderr
     key=serialization.load_pem_private_key(values['JWT_PRIVATE_KEY_PEM'].replace('\\n','\n').encode(),password=None)
     assert isinstance(key,rsa.RSAPrivateKey) and key.key_size>=2048
     assert values['SESSION_SECRET'] not in result.stdout+result.stderr

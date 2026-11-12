@@ -9,6 +9,9 @@
 | Handshake timeout | FE must call SDK inside iframe. Confirm exact merchantOrigin and configured frontend origin. Use receiver demo to isolate parent/backend from external FE. |
 | Cross-origin SDK import blocked | Bundle a copy of merchant-bridge.js with the FE; cross-origin module serving is not enabled. |
 | Token unavailable | Check server-only RSA key, key ID, issuer/audience, user configuration and session. Never paste keys/tokens into a ticket. |
+| Exchange 401 `Unauthorized` | `Authorization` must be exactly `Basic <value of GOPAY_SIM_BASIC_CREDENTIAL>` (no extra encoding or whitespace). The simulator and the Mini App server must hold the same value. |
+| Exchange 400 `AuthCode Not Found` | Same body for every code failure by design: expired (over 300 s), tampered, truncated, a different `SESSION_SECRET` between issue and exchange, or a login cookie/auth token sent as a code. Request a fresh code. |
+| Exchange 503 | `GOPAY_SIM_BASIC_CREDENTIAL` (or `SESSION_SECRET`) is not configured on this deployment. |
 | Mini App 401 | Verify merchant exists, code, issuer, audience, kid, JWKS and clocks. Token mint success alone does not establish service acceptance. |
 | Mini App AUTH_UNAVAILABLE | Fetch public JWKS from service network; check DNS, timeout, redirects and deployment protection. |
 | Mini App 403 | A valid token may belong to a disabled merchant; distinguish this from auth failure. |
